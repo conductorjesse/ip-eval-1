@@ -52,7 +52,24 @@ def verify():
             print(f"PDF Generation Returned unexpected type/size: {type(pdf_bytes)}")
     except Exception as e:
         print(f"PDF Generation Failed: {e}")
-    
+
+    # 1.6 Verify Markdown Parser (Round 3.3 Update)
+    print("\n1.6 Verifying Markdown Parsing Logic...")
+    test_md = """
+    ### 1. Technology Overview
+    Content for tech.
+    ### 2. Market & Commercial Analysis
+    Content for market.
+    ### 3. Further Exploration
+    Content for further.
+    """
+    parsed = analysis.parse_evaluation_sections(test_md)
+    print("Parsed Keys:", list(parsed.keys()))
+    if "Technology Overview" in parsed and parsed["Technology Overview"] == "Content for tech.":
+        print("Parsing Logic Verified.")
+    else:
+        print("Parsing Logic Failed / Unexpected Output:", parsed)
+
     # 2. Portfolio Analysis Test (Round 3 Update: List of dicts)
     print("\n2. Testing Portfolio Analysis...")
     try:

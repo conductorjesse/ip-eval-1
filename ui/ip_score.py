@@ -112,14 +112,15 @@ def render_score_page():
     # --- 2. Input Form (Bottom, Collapsible) ---
     st.subheader("Assessment Questions")
     with st.form("ip_score_form"):
-        # Create a global counter or index to ensure uniqueness across categories if codes repeat
-        # Although codes should be unique (A1, A2...), let's be safe.
+        # Use a simple flat counter to ensure absolute key uniqueness
+        # This avoids any issues with duplicate codes, categories, or loop indices
+        radio_counter = 0
         
         for cat in categories:
             with st.expander(f"{cat} Factors", expanded=False):
                 cat_qs = [q for q in questions if q['category'] == cat]
                 
-                for i, q in enumerate(cat_qs):
+                for q in cat_qs:
                     current_val = st.session_state["ip_scores"].get(q['code'], 0) # default 0
                     
                     # Initialize index
@@ -127,8 +128,9 @@ def render_score_page():
                     if current_val > 0:
                         idx = current_val - 1
                     
-                    # Ensure unique key even if codes duplicate (e.g. via copy paste in CSV)
-                    unique_key = f"radio_{q['code']}_{cat}_{i}"
+                    # Safe key using flat counter
+                    unique_key = f"radio_{q['code']}_{radio_counter}"
+                    radio_counter += 1
                     
                     selected = st.radio(
                         f"{q['code']}: {q['question']}",

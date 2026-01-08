@@ -141,6 +141,9 @@ def analyze_portfolio(patent_list, user_context, api_key):
         ### 3. Strategic Recommendations
         * **Commercialization Strategy:** [How to bundle or sell?]
         * **Action Items:** [Keep, Drop, or Strengthen?]
+
+        Do not add additional text around next steps that you as an AI agent can help with -- this text will be displayed in a web app where the user doesn't have further interactions with you.
+
         """
          
         response = client.chat.completions.create(
@@ -155,71 +158,7 @@ def analyze_portfolio(patent_list, user_context, api_key):
     except Exception as e:
         return f"Error analyzing portfolio: {str(e)}"
 
-def generate_pitch_deck(patent_data, user_context, api_key):
-    """
-    Generates a pitch deck outline for an innovator.
-    """
-    try:
-        client = get_client(api_key)
-        
-        # Build context from patent data (handle list or single)
-        if isinstance(patent_data, list):
-             # Portfolio mode
-             p_context = f"Portoflio of {len(patent_data)} patents."
-             p_title = "IP Portfolio"
-        else:
-             p_context = f"Title: {patent_data.get('title')}\nAbstract: {patent_data.get('abstract')}"
-             p_title = patent_data.get('title')
 
-        prompt = f"""
-        Create a 7-slide Investor Pitch Deck for the following IP.
-        
-        **IP Context:** {p_title}
-        {p_context[:2000]}
-        
-        **User/Company Context:** {user_context}
-        
-        **Slides Required:**
-        1. Title Slide (Catchy Tagline)
-        2. The Problem (Pain Point)
-        3. The Solution (The Tech/IP)
-        4. Market Opportunity (TAM/SAM/SOM)
-        5. Competitive Advantage (Moat)
-        6. Business Model
-        7. The Ask / Next Steps
-        
-        Output as a structured list with 'Slide X: [Title]' and bullet points for content.
-        """
-        
-        response = client.chat.completions.create(
-            model="gpt-5-mini",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"Error generating pitch deck: {str(e)}"
-
-def generate_glossary(patent_text, api_key):
-    """
-    Extracts difficult terms and provides ELI5 definitions.
-    """
-    try:
-        client = get_client(api_key)
-        prompt = f"""
-        Extract 10-15 complex technical terms or legal jargon from the text below and provide simple, 'Explain Like I'm 5' definitions for a business user.
-        Format as a Markdown table with columns: Term, Definition.
-        
-        Text:
-        {patent_text[:10000]}
-        """
-        
-        response = client.chat.completions.create(
-            model="gpt-5-mini",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"Error generating glossary: {str(e)}"
 
 def format_chat_history(streamlit_messages):
     """
@@ -266,3 +205,53 @@ def chat_with_patent_context(user_message, history, patent_context_str, api_key)
         return response.choices[0].message.content
     except Exception as e:
         return f"Error in chat: {str(e)}"
+def parse_evaluation_sections(markdown_text):
+    """
+    Parses the structured Markdown evaluation into a dictionary of sections.
+    Expected headers:
+    ### 1. Technology Overview
+    ### 2. Market & Commercial Analysis
+    ### 3. Further Exploration
+    """
+    sections = {
+        "Technology Overview": "",
+        "Market & Commercial Analysis": "",
+        "Further Exploration": ""
+    }
+    
+    if not markdown_text:
+        return sections
+        
+    # Split by the known headers
+    # We use a simple split/find implementation or regex
+    # Given the strict prompt, simple string splitting is robust enough if model obeys.
+    
+    # Normalize newlines
+    text = markdown_text.replace("\r\n", "\n")
+    
+    # 1. Tech
+    part1_marker = "### 1. Technology Overview"
+    part2_marker = "### 2. Market & Commercial Analysis"
+    part3_marker = "### 3. Further Exploration"
+    
+    p1_start = text.find(part1_marker)
+    p2_start = text.find(part2_marker)
+    p3_start = text.find(part3_marker)
+    
+    if p1_start != -1:
+        # End of p1 is start of p2 if p2 exists, else end of text
+        end = p2_start if p2_start != -1 else len(text)
+        sections["Technology Overview"] = text[p1_start:end].replace(part1_marker, "").strip()
+        
+    if p2_start != -1:
+        end = p3_start if p3_start != -1 else len(text)
+        sections["Market & Commercial Analysis"] = text[p2_start:end].replace(part2_marker, "").strip()
+        
+    if p3_start != -1:
+        sections["Further Exploration"] = text[p3_start:].replace(part3_marker, "").strip()
+        
+    # Fallback: if no headers found (raw model output failure), put all in first
+    if all(not v for v in sections.values()):
+        sections["Technology Overview"] = markdown_text
+        
+    return sections

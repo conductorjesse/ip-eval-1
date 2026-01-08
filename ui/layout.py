@@ -68,51 +68,92 @@ def render_setup_page():
         
     return main_patent_input, complementary_input, analyze_btn
 
-def render_results_page(main_eval, portfolio_eval=None):
+import json
+from logic import analysis # Correct import path
+
+def render_results_page(evaluation, evaluation_portfolio=None):
     """
-    Renders the evaluation results.
+    Renders the Analysis Results page with modular sections and chat.
     """
     st.header("Evaluation Results")
-    if not main_eval:
-        st.info("No evaluation generated yet. Please go to 'Analysis Setup' to start.")
+    
+    if not evaluation:
+        st.info("No evaluation available. Please run an analysis in 'Analysis Setup'.")
         return
 
-    # Tabs: Tech, Market, Next Steps are for MAIN patent.
-    # Portfolio Overview is for PORTFOLIO (if exists).
+    # --- Tabs Layout (Reverted Request) ---
+    tab_labels = [
+        "Technology Overview", 
+        "Market & Commercial Analysis", 
+        "Further Exploration"
+    ]
     
-    tabs_list = ["Technology", "Market & Commercial", "Next Steps"]
-    if portfolio_eval:
-        tabs_list.append("Portfolio Overview")
+    if evaluation_portfolio:
+        tab_labels.append("Portfolio Overview")
+        
+    tabs = st.tabs(tab_labels)
     
-    tabs = st.tabs(tabs_list)
-    
-    # Parse Main Eval
-    try:
-        parts = main_eval.split("### ")
-        tech_content = "### " + parts[1] if len(parts) > 1 else main_eval
-        market_content = "### " + parts[2] if len(parts) > 2 else ""
-        next_steps_content = "### " + parts[3] if len(parts) > 3 else ""
-    except:
-        tech_content = main_eval
-        market_content = "Error parsing response structure."
-        next_steps_content = ""
+    # Parse Markdown Sections
+    eval_data = analysis.parse_evaluation_sections(evaluation)
 
+    # Render Main Analysis Tabs
+    # 1. Technology
     with tabs[0]:
-        st.markdown(tech_content)
+        title = "Technology Overview"
+        content = eval_data.get(title, "N/A")
+        st.markdown(content)
+        _render_section_chat(title, content)
+
+    # 2. Market
     with tabs[1]:
-        if market_content:
-            st.markdown(market_content)
-        else:
-            st.info("Market analysis not found.")
+        title = "Market & Commercial Analysis"
+        content = eval_data.get(title, "N/A")
+        st.markdown(content)
+        _render_section_chat(title, content)
+        
+    # 3. Further Exploration
     with tabs[2]:
-        if next_steps_content:
-            st.markdown(next_steps_content)
-        else:
-            st.info("Next steps not found.")
-            
-    if portfolio_eval and len(tabs) > 3:
+        title = "Further Exploration"
+        content = eval_data.get(title, "N/A")
+        st.markdown(content)
+        _render_section_chat(title, content)
+
+    # 4. Portfolio (if exists)
+    if evaluation_portfolio and len(tabs) > 3:
         with tabs[3]:
-            st.markdown(portfolio_eval)
+            st.markdown(evaluation_portfolio)
+
+def _render_section_chat(title, content):
+    """
+    Helper to render the specific chat expander for a section.
+    """
+    history_key = f"chat_history_{title.replace(' ','_')}"
+    if history_key not in st.session_state:
+        st.session_state[history_key] = []
+    
+    st.divider()
+    with st.expander(f"Ask about {title}", expanded=False):
+        # Display Local History
+        for msg in st.session_state[history_key]:
+            st.markdown(f"**{msg['role'].title()}:** {msg['content']}")
+        
+        # Local Input
+        if f"input_{history_key}" not in st.session_state:
+             st.session_state[f"input_{history_key}"] = ""
+        
+        q = st.text_input(f"Question about {title}:", key=f"q_{history_key}")
+        
+        if st.button("Ask", key=f"btn_{history_key}"):
+            if q:
+                st.session_state[history_key].append({"role": "user", "content": q})
+                
+                api_key = st.session_state.get("api_key")
+                if api_key:
+                    with st.spinner("Thinking..."):
+                        section_context = f"Section: {title}\nContent: {content}"
+                        ans = analysis.chat_with_patent_context(q, [], section_context, api_key)
+                        st.session_state[history_key].append({"role": "assistant", "content": ans})
+                        st.rerun()
 
 def render_raw_data_page(patent_data_list):
     """
