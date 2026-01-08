@@ -49,6 +49,10 @@ def render_setup_page():
             "Enter Patent URL or Number (Google Patents)", 
             placeholder="e.g. WO2025235535A2 or https://patents.google.com/patent/WO2025235535A2"
         )
+        st.caption("Example Patent:")
+        st.code("US9138726B2", language="text")
+        st.caption("Copper-based catalyst for converting ammonia into nitrogen")
+
     with col2:
         # Align button with input
         st.write("") 

@@ -18,13 +18,16 @@ class PDFReport(FPDF):
         # Page number
         self.cell(0, 10, 'Page ' + str(self.page_no()) + '/{nb}', 0, 0, 'C')
 
+    def sanitize(self, text):
+        return text.encode('latin-1', 'replace').decode('latin-1')
+
     def chapter_title(self, label):
         # Arial 12
         self.set_font('Arial', 'B', 12)
         # Background color
         self.set_fill_color(200, 220, 255)
         # Title
-        self.cell(0, 6, label, 0, 1, 'L', 1)
+        self.cell(0, 6, self.sanitize(label), 0, 1, 'L', 1)
         # Line break
         self.ln(4)
 
@@ -32,7 +35,7 @@ class PDFReport(FPDF):
         # Read text file
         self.set_font('Arial', '', 11)
         # Output justified text
-        self.multi_cell(0, 5, body)
+        self.multi_cell(0, 5, self.sanitize(body))
         # Line break
         self.ln()
 
@@ -43,9 +46,9 @@ def create_pdf(patent_data, evaluation_text, user_context, filename="ip_report.p
     
     # Metadata Section
     pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 10, f"Patent: {patent_data.get('title', 'Unknown')}", 0, 1)
+    pdf.cell(0, 10, f"Patent: {pdf.sanitize(patent_data.get('title', 'Unknown'))}", 0, 1)
     pdf.set_font('Arial', '', 10)
-    pdf.cell(0, 5, f"Publication Number: {patent_data.get('publication_number', 'N/A')}", 0, 1)
+    pdf.cell(0, 5, f"Publication Number: {pdf.sanitize(patent_data.get('publication_number', 'N/A'))}", 0, 1)
     pdf.cell(0, 5, f"Date Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 0, 1)
     pdf.ln(5)
     
@@ -81,4 +84,4 @@ def create_pdf(patent_data, evaluation_text, user_context, filename="ip_report.p
     if current_body:
         pdf.chapter_body(current_body.strip())
 
-    return pdf.output(dest='S') # Return as byte string for Streamlit download
+    return pdf.output(dest='S').encode('latin-1') # Return as bytes for Streamlit download

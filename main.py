@@ -7,8 +7,8 @@ from logic import scraper
 from logic import analysis
 from ui import layout
 
-# Load environment variables (optional for local dev if not using secrets, but we use secrets now)
-# load_dotenv()
+# Load environment variables
+load_dotenv()
 
 # Page Config
 st.set_page_config(page_title="IP Evaluation Tool", layout="wide", initial_sidebar_state="expanded")
@@ -21,13 +21,12 @@ if "evaluation" not in st.session_state:
 if "chat_history" not in st.session_state:
     st.session_state["chat_history"] = []
 if "api_key" not in st.session_state:
-    # Try to get from secrets
+    # 1. Try secrets
     try:
-        st.session_state["api_key"] = st.secrets["GEMINI_API_KEY"]
-    except FileNotFoundError:
-        st.session_state["api_key"] = None
-    except KeyError:
-        st.session_state["api_key"] = None
+        st.session_state["api_key"] = st.secrets["OPENAI_API_KEY"]
+    except (FileNotFoundError, KeyError):
+        # 2. Try env
+        st.session_state["api_key"] = os.getenv("OPENAI_API_KEY")
 
 # --- UI Rendering ---
 
@@ -47,7 +46,7 @@ with col_content:
         if analyze_btn:
             api_key = st.session_state.get("api_key")
             if not api_key:
-                st.error("Please provide a Gemini API Key in `.streamlit/secrets.toml`.")
+                st.error("Please provide an OpenAI API Key in `.streamlit/secrets.toml` or `.env`.")
             elif not patent_input:
                 st.warning("Please enter a patent number or URL.")
             else:
@@ -64,8 +63,8 @@ with col_content:
                     st.session_state["patent_data"] = data
                     st.success("Patent data retrieved!")
                     
-                    # 2. Analyze with Gemini
-                    with st.spinner("Analyzing with Gemini..."):
+                    # 2. Analyze with OpenAI
+                    with st.spinner("Analyzing..."):
                         user_context = st.session_state.get("user_context", "")
                         evaluation = analysis.analyze_patent(data, user_context, api_key)
                         st.session_state["evaluation"] = evaluation
@@ -122,13 +121,13 @@ with col_chat:
 # Handle Chat Generation (if last message is user)
 if st.session_state["chat_history"] and st.session_state["chat_history"][-1]["role"] == "user":
     with col_chat:
-        with st.chat_message("model"):
+        with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 api_key = st.session_state.get("api_key")
                 
                 # History excluding current prompt
                 previous_history = st.session_state["chat_history"][:-1]
-                gemini_hist = analysis.format_chat_history(previous_history)
+                openai_hist = analysis.format_chat_history(previous_history)
                 
                 # Patent Context
                 p_data = st.session_state["patent_data"]
@@ -143,13 +142,13 @@ if st.session_state["chat_history"] and st.session_state["chat_history"][-1]["ro
                 
                 response_text = analysis.chat_with_patent_context(
                     st.session_state["chat_history"][-1]["content"], 
-                    gemini_hist, 
+                    openai_hist, 
                     patent_context_str, 
                     api_key
                 )
                 
                 if response_text:
-                     # This might print twice if we aren't careful, but st.chat_message("model") here is correct.
+                     # This might print twice if we aren't careful, but st.chat_message("assistant") here is correct.
                      st.markdown(response_text)
-                     st.session_state["chat_history"].append({"role": "model", "content": response_text})
+                     st.session_state["chat_history"].append({"role": "assistant", "content": response_text})
                      st.rerun() 

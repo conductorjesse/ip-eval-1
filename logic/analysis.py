@@ -1,28 +1,25 @@
-import google.generativeai as genai
+from openai import OpenAI
 import os
 
-def get_model(api_key):
+def get_client(api_key):
     """
-    Configures and returns the Gemini GenerativeModel.
+    Configures and returns the OpenAI Client.
     """
     if not api_key:
         raise ValueError("API Key is required")
     
-    genai.configure(api_key=api_key)
-    # Using 3 Flash Preview as requested
-    return genai.GenerativeModel('gemini-3-flash-preview')
+    return OpenAI(api_key=api_key)
 
 def analyze_patent(patent_data, user_context, api_key):
     """
-    Analyzes the patent data against the evaluation framework using Gemini.
+    Analyzes the patent data against the evaluation framework using OpenAI GPT-5 mini.
     """
     try:
-        model = get_model(api_key)
+        client = get_client(api_key)
         
         # Prepare data strings
         claims_text = ""
         if patent_data.get('claims'):
-            # Convert list of dicts or strings to text
             if isinstance(patent_data['claims'][0], dict):
                 claims_text = "\n".join([f"{c['number']}: {c['text']}" for c in patent_data['claims']])
             else:
@@ -30,11 +27,9 @@ def analyze_patent(patent_data, user_context, api_key):
         
         description_text = "\n".join(patent_data.get('description', []))
         
-        # Truncate if extremely large, though 1.5 Flash has 1M context.
-        # Let's include everything we can.
+        system_prompt = "Act as an expert IP analyst, Tech Transfer Officer, and commercialization specialist."
         
-        prompt = f"""
-        Act as an expert IP analyst, Tech Transfer Officer, and commercialization specialist.
+        user_prompt = f"""
         Evaluate the following patent based on the provided user context.
         
         **User Context:**
@@ -88,8 +83,14 @@ def analyze_patent(patent_data, user_context, api_key):
         Note: For 'External internet searches' (e.g. other patents), rely on your internal knowledge or the 'Similar Documents' identified in the patent text if available.
         """
         
-        response = model.generate_content(prompt)
-        return response.text
+        response = client.chat.completions.create(
+            model="gpt-5-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
+        )
+        return response.choices[0].message.content
         
     except Exception as e:
         return f"Error analyzing patent: {str(e)}"
@@ -97,39 +98,45 @@ def analyze_patent(patent_data, user_context, api_key):
 def format_chat_history(streamlit_messages):
     """
     Converts Streamlit chat history [{'role': 'user', 'content': '...'}, ...]
-    to Gemini history format.
+    to OpenAI history format.
+    Essentially a pass-through but ensures keys are correct.
     """
-    gemini_history = []
+    openai_history = []
     for msg in streamlit_messages:
-        role = "user" if msg["role"] == "user" else "model"
-        gemini_history.append({"role": role, "parts": [msg["content"]]})
-    return gemini_history
+        role = "user" if msg["role"] == "user" else "assistant"
+        openai_history.append({"role": role, "content": msg["content"]})
+    return openai_history
 
 def chat_with_patent_context(user_message, history, patent_context_str, api_key):
     """
-    Sends a message to Gemini with the patent context (if first message) and history.
+    Sends a message to OpenAI with the patent context (if first message) and history.
     """
     try:
-        model = get_model(api_key)
+        client = get_client(api_key)
         
-        # If history is empty, prepend the system context
-        if not history:
-            system_instruction = f"""
-            You are an assistant helping a user understand a patent.
-            Here is the Patent Context:
-            {patent_context_str}
+        messages = []
+        
+        # System context
+        system_instruction = f"""
+        You are an assistant helping a user understand a patent.
+        Here is the Patent Context:
+        {patent_context_str}
+        
+        Answer the user's questions based on this context. Keep answers concise.
+        """
+        messages.append({"role": "system", "content": system_instruction})
+        
+        # Append history (which should already be in OpenAI format via format_chat_history)
+        if history:
+            messages.extend(history)
             
-            Answer the user's questions based on this context. Keep answers concise.
-            """
-            # We can't easily use system_instruction in standard generate_content without context caching or just prepending.
-            # We'll just prepend it to the first message or history.
-            history = [{"role": "user", "parts": [system_instruction]}] # Seed context
-            # Acknowledge logic? 
-            # Or better: use system_instruction argument if supported, or just put it in the list.
-            # Since we are using chat, we can start the chat with this history.
+        # Append current user message
+        messages.append({"role": "user", "content": user_message})
         
-        chat = model.start_chat(history=history)
-        response = chat.send_message(user_message)
-        return response.text
+        response = client.chat.completions.create(
+            model="gpt-5-mini",
+            messages=messages
+        )
+        return response.choices[0].message.content
     except Exception as e:
         return f"Error in chat: {str(e)}"
