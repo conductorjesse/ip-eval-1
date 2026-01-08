@@ -141,8 +141,8 @@ def analyze_portfolio(patent_list, user_context, api_key):
         ### 3. Strategic Recommendations
         * **Commercialization Strategy:** [How to bundle or sell?]
         * **Action Items:** [Keep, Drop, or Strengthen?]
-
-        Do not add additional text around next steps that you as an AI agent can help with -- this text will be displayed in a web app where the user doesn't have further interactions with you.
+        
+        **note:** Do not offer further help on this evaluation. Limit your response to just the analysis.
 
         """
          
