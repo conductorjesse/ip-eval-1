@@ -20,15 +20,24 @@ def render_setup_page():
     st.header("Analysis Setup")
     
     # 1. User Context
-    st.subheader("1. User Context")
-    default_context = "I am a startup founder focused on critical minerals exploration. I am looking for technologies that improve the efficiency of mineral recovery from unconventional sources (e.g., brines, mine tailings) or reduce the environmental impact of extraction."
-    user_context = st.text_area(
-        "Describe your background and goals:",
-        value=st.session_state.get("user_context", default_context),
-        height=150
-    )
+    st.subheader("1. User Context & Goals")
+    
+    with st.expander("Customize your persona", expanded=True):
+        col_ctx1, col_ctx2 = st.columns(2)
+        with col_ctx1:
+            role = st.text_input("Role / Background", value="Scientific Entrepreneur with chemistry expertise")
+            goal = st.text_input("Primary Goal", value="Identify low-carbon chemical technologies")
+        with col_ctx2:
+            criteria = st.text_area("Specific Criteria", value="Looking for modular systems, TRL 4+, avoiding toxic catalysts.", height=100)
+            
+    # Combine into a single context string for the AI
+    user_context = f"""
+    **Role:** {role}
+    **Goal:** {goal}
+    **Specific Criteria:** {criteria}
+    """
     st.session_state["user_context"] = user_context
-    st.info("The more specific your context, the better the evaluation.")
+    st.caption("This context helps the AI verify if the technology matches your specific needs.")
 
     # 2. Patent Input
     st.divider()
@@ -57,7 +66,40 @@ def render_results_page(evaluation_text):
         st.info("No evaluation generated yet. Please go to 'Analysis Setup' to start.")
         return
 
-    st.markdown(evaluation_text)
+    # Create tabs for better organization
+    tab1, tab2, tab3 = st.tabs(["Technology", "Market & Commercial", "Next Steps"])
+    
+    # We need to parse the markdown to split it into tabs, or just render sections.
+    # Since the AI output is structured, we can try to split by headers. 
+    # But for robustness, if parsing fails, we fallback to showing full text.
+    
+    try:
+        parts = evaluation_text.split("### ")
+        # parts[0] might be intro text
+        # parts[1] is Tech Overview
+        # parts[2] is Market
+        # parts[3] is Further Exploration
+        
+        tech_content = "### " + parts[1] if len(parts) > 1 else evaluation_text
+        market_content = "### " + parts[2] if len(parts) > 2 else ""
+        next_steps_content = "### " + parts[3] if len(parts) > 3 else ""
+        
+        with tab1:
+            st.markdown(tech_content)
+        with tab2:
+            if market_content:
+                st.markdown(market_content)
+            else:
+                st.info("Market analysis not found in response.")
+        with tab3:
+            if next_steps_content:
+                st.markdown(next_steps_content)
+            else:
+                st.info("Next steps not found in response.")
+            
+    except Exception:
+        # Fallback
+        st.markdown(evaluation_text)
 
 def render_raw_data_page(patent_data):
     """

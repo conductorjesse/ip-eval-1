@@ -34,7 +34,7 @@ def analyze_patent(patent_data, user_context, api_key):
         # Let's include everything we can.
         
         prompt = f"""
-        Act as an expert IP analyst and commercialization specialist.
+        Act as an expert IP analyst, Tech Transfer Officer, and commercialization specialist.
         Evaluate the following patent based on the provided user context.
         
         **User Context:**
@@ -56,34 +56,34 @@ def analyze_patent(patent_data, user_context, api_key):
         {description_text[:100000]}
         
         **Instruction:**
-        Provide an evaluation based on the following framework. 
-        Provide short responses (300 character max) for each sub-bullet.
-        Structure the output as Markdown with headers exactly as shown below:
+        Provide a detailed evaluation based on the following framework.
+        Provide concise but insightful responses for each sub-bullet.
         
-        ### 1. Technology overview
-        * **Background:** [Response]
-        * **Problem Solved:** [Response]
-        * **Solution Description:** [Response]
-        * **Technology Advantages and Benefits:** [Response]
-        * **Technology Deficiencies and Limitations:** [Response]
-        * **R&D required before it is ready for the market:** [Response]
-        * **Technical Barriers to Commercialization:** [Response]
+        IMPORTANT: Format the output using the exact Markdown headers below. Do not deviate from this structure.
         
-        ### 2. Market analysis
-        * **Target Market(s) and Industry:** [Response]
-        * **Size, Growth, Trends:** [Response]
-        * **IP Bundling Possibilities:** [Response]
-        * **Value Chain Position:** [Response]
-        * **Barriers:** [Response]
-        * **Regulatory and Compliance requirements:** [Response]
-        * **Policy headwinds/tailwinds:** [Response]
-        
-        ### 3. Further exploration
-        * **Questions to ask tech transfer office:** [Response]
-        * **Questions to ask the inventors:** [Response]
-        * **Key outstanding questions that would be important to answer:** [Response]
-        * **Potential markets that would be relevant:** [Response]
-        * **Other questions based on an expert’s review:** [Response]
+        ### 1. Technology Overview
+        * **Background & Context:** [Response]
+        * **Problem Solved (Value Proposition):** [Response]
+        * **Solution Description (Technical Approach):** [Response]
+        * **Technology Readiness Level (TRL) Assessment (1-9 scale):** [Estimate TRL and explain why]
+        * **Unique Technical Advantages:** [Response]
+        * **Technical Deficiencies & Risks:** [Response]
+        * **R&D Milestones to Commercialization:** [Response]
+
+        ### 2. Market & Commercial Analysis
+        * **Target Market(s) & Segmentation:** [Response]
+        * **Commercial Readiness Level (CRL) Assessment (1-9 scale):** [Estimate CRL and explain why]
+        * **Market Size, Growth, Trends:** [Response]
+        * **Freedom to Operate (FTO) / Competitive Landscape Snapshot:** [Identify potential incumbents or crowding based on context]
+        * **Value Chain Positioning:** [Response]
+        * **Barriers to Entry:** [Response]
+        * **Regulatory, Compliance, & Policy:** [Response]
+
+        ### 3. Further Exploration
+        * **Questions for Tech Transfer Office:** [Response]
+        * **Questions for Inventors:** [Response]
+        * **Key Outstanding Questions:** [Response]
+        * **Potential Follow-on Markets:** [Response]
         
         Note: For 'External internet searches' (e.g. other patents), rely on your internal knowledge or the 'Similar Documents' identified in the patent text if available.
         """

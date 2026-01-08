@@ -76,7 +76,34 @@ with col_content:
                     st.error("Failed to scrape patent. Please check the ID/URL and try again.")
     
     elif selected_page == "Evaluation Results":
+        # Render Results
         layout.render_results_page(st.session_state["evaluation"])
+        
+        # Download PDF Section
+        if st.session_state["evaluation"] and st.session_state["patent_data"]:
+            st.divider()
+            col_dl1, col_dl2 = st.columns([3, 1])
+            with col_dl2:
+                # Generate PDF on the fly when button is clicked (or pre-generate if slow)
+                # Since it's fast, we can do it inside the download button callback if possible?
+                # St.download_button requires data upfront.
+                
+                from logic import report_generator
+                
+                # We generate it here.
+                pdf_bytes = report_generator.create_pdf(
+                    st.session_state["patent_data"],
+                    st.session_state["evaluation"],
+                    st.session_state.get("user_context", "No context provided.")
+                )
+                
+                st.download_button(
+                    label="Download Report as PDF",
+                    data=pdf_bytes,
+                    file_name=f"IP_Eval_{st.session_state['patent_data'].get('publication_number', 'report')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
         
     elif selected_page == "Raw Data":
         layout.render_raw_data_page(st.session_state["patent_data"])
