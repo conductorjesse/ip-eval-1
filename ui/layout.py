@@ -27,10 +27,10 @@ def render_setup_page():
     with st.expander("Customize your persona", expanded=True):
         col_ctx1, col_ctx2 = st.columns(2)
         with col_ctx1:
-            role = st.text_input("Role / Background", value="Scientific Entrepreneur with chemistry expertise")
-            goal = st.text_input("Primary Goal", value="Identify low-carbon chemical technologies")
+            role = st.text_area("Role / Background", value="PhD in Chemical Engineering, focused on catalysis, 10 years in industry", height=100)
+            goal = st.text_area("Primary Goal", value="License 1-2 early-stage catalyst technologies that can convert renewable feedstocks (CO2, biomass, green H2) into commodity chemicals or drop-in fuels.", height=100)
         with col_ctx2:
-            criteria = st.text_area("Specific Criteria", value="Looking for modular systems, TRL 4+, avoiding toxic catalysts.", height=100)
+            criteria = st.text_area("Specific Criteria", value="Technology readiness: TRL 3-5 (proof of concept demonstrated, ideally some bench-scale data). IP strength: Clear patent coverage with freedom to operate", height=100)
             
     # Combine into a single context string for the AI
     user_context = f"""
@@ -39,7 +39,7 @@ def render_setup_page():
     **Specific Criteria:** {criteria}
     """
     st.session_state["user_context"] = user_context
-    st.caption("This helps the AI provide more relevant feedback and focus on if the technology matches your specific needs.")
+    st.caption("This helps the tool provide more relevant feedback and focus on if the technology matches your specific needs.")
 
     # 2. Patent Input
     st.divider()
