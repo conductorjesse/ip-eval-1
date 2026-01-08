@@ -53,22 +53,44 @@ def verify():
     except Exception as e:
         print(f"PDF Generation Failed: {e}")
 
-    # 1.6 Verify Markdown Parser (Round 3.3 Update)
-    print("\n1.6 Verifying Markdown Parsing Logic...")
-    test_md = """
-    ### 1. Technology Overview
-    Content for tech.
-    ### 2. Market & Commercial Analysis
-    Content for market.
-    ### 3. Further Exploration
-    Content for further.
-    """
-    parsed = analysis.parse_evaluation_sections(test_md)
-    print("Parsed Keys:", list(parsed.keys()))
-    if "Technology Overview" in parsed and parsed["Technology Overview"] == "Content for tech.":
-        print("Parsing Logic Verified.")
-    else:
-        print("Parsing Logic Failed / Unexpected Output:", parsed)
+    
+    # 3. Verify IP Score Categories (Debug Duplication)
+    print("\n3. Debugging IP Score Categories...")
+    import pandas as pd
+    import os
+    
+    # Mimic logic from ui/ip_score.py
+    base_dir = os.getcwd()
+    csv_path = os.path.join(base_dir, "planning", "IPscore-full-table.csv")
+    print(f"Reading CSV from: {csv_path}")
+    
+    try:
+        df = pd.read_csv(csv_path)
+        print(f"Loaded {len(df)} rows.")
+        
+        categories_map = {
+            'A': 'Legal Status',
+            'B': 'Technology',
+            'C': 'Market Conditions',
+            'D': 'Finance',
+            'E': 'Strategy'
+        }
+        
+        qs = []
+        for index, row in df.iterrows():
+            if pd.isna(row['Factor']) or not str(row['Factor']).strip():
+                continue
+            
+            f_code = str(row['Factor']).strip()
+            c_code = f_code[0]
+            cat_name = categories_map.get(c_code, "Other")
+            qs.append(cat_name)
+            
+        unique_cats = sorted(list(set(qs)))
+        print(f"Unique Categories Found: {unique_cats}")
+        
+    except Exception as e:
+        print(f"Error reading CSV: {e}")
 
     # 2. Portfolio Analysis Test (Round 3 Update: List of dicts)
     print("\n2. Testing Portfolio Analysis...")

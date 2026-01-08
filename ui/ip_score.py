@@ -58,8 +58,15 @@ def render_score_page():
     if "ip_scores" not in st.session_state:
         st.session_state["ip_scores"] = {}
 
-    # Group by category
-    categories = sorted(list(set(q['category'] for q in questions)))
+    # Group by category - Enforce strict unique list to prevent duplicates
+    # We explicitly define the allowed categories to ensure cleaner UI and catch data errors
+    categories = sorted([
+        'Legal Status',
+        'Technology', 
+        'Market Conditions', 
+        'Finance', 
+        'Strategy'
+    ])
     
     # --- 1. Results Visualization (Top) ---
     if questions:
@@ -77,7 +84,7 @@ def render_score_page():
         
         # Spider Chart
         data_vals = [cat_scores[cat] for cat in categories]
-        data_cats = categories
+        data_cats = list(categories)
         
         # Close the loop
         data_vals.append(data_vals[0])
@@ -117,7 +124,7 @@ def render_score_page():
         radio_counter = 0
         
         for cat in categories:
-            with st.expander(f"{cat} Factors", expanded=False):
+            with st.expander(f"{cat} Assessment", expanded=False):
                 cat_qs = [q for q in questions if q['category'] == cat]
                 
                 for q in cat_qs:
