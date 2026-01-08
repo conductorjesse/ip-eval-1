@@ -53,14 +53,46 @@ def verify():
     except Exception as e:
         print(f"PDF Generation Failed: {e}")
     
+    # 2. Portfolio Analysis Test (Round 3 Update: List of dicts)
+    print("\n2. Testing Portfolio Analysis...")
+    try:
+        # Round 3 Logic: analysis.analyze_portfolio expects a LIST of patent dicts
+        mock_portfolio = [
+            {"publication_number": "PAT1", "title": "Invention A", "abstract": "Solves X", "claims": ["Claim 1"]},
+            {"publication_number": "PAT2", "title": "Invention B", "abstract": "Solves Y", "claims": ["Claim 1"]}
+        ]
+        res = analysis.analyze_portfolio(mock_portfolio, "Investor Persona", api_key)
+        print(f"Portfolio Analysis Result (snippet): {res[:100]}...")
+    except Exception as e:
+        print(f"Portfolio Analysis Failed: {e}")
+
+    # 3. Pitch Deck Test - Replaced with Raw Data in UI, but Logic still exists? 
+    # Actually User requested to remove Innovator Tools UI, but logic might remain or be removed. 
+    # Logic file wasn't changed to remove it, so test can stay or be redundant.
+    # Let's keep it to ensure analysis.py didn't break.
+    print("\n3. Testing Pitch Deck Generation (Backend)...")
+    try:
+        res = analysis.generate_pitch_deck({"title": "Test IP", "abstract": "Cool tech"}, "Startup Context", api_key)
+        print(f"Pitch Deck Result (snippet): {res[:100]}...")
+    except Exception as e:
+        print(f"Pitch Deck Gen Failed: {e}")
+
+    # 4. Glossary Test
+    print("\n4. Testing Glossary Generation (Backend)...")
+    try:
+        res = analysis.generate_glossary("The apparatus comprises a plurality of orthogonal axis actuators.", api_key)
+        print(f"Glossary Result (snippet): {res[:100]}...")
+    except Exception as e:
+        print(f"Glossary Gen Failed: {e}")
+    
     if not data or not data.get('title'):
         print("Scraping failed.")
         return
     else:
         print(f"Scraping success: {data['title']}")
 
-    # 2. Analyze
-    print("\n2. Analyze with Gemini...")
+    # 5. Analyze
+    print("\n5. Analyze with Gemini...")
     try:
         context = "Verification Test User"
         evaluation = analysis.analyze_patent(data, context, api_key)

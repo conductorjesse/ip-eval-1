@@ -95,6 +95,132 @@ def analyze_patent(patent_data, user_context, api_key):
     except Exception as e:
         return f"Error analyzing patent: {str(e)}"
 
+def analyze_portfolio(patent_list, user_context, api_key):
+    """
+    Analyzes a list of patents as a portfolio.
+    """
+    try:
+        client = get_client(api_key)
+        
+        # Build portfolio context
+        portfolio_text = ""
+        for i, p in enumerate(patent_list):
+            portfolio_text += f"\n--- Patent {i+1}: {p.get('publication_number')} ---\n"
+            portfolio_text += f"Title: {p.get('title')}\n"
+            portfolio_text += f"Abstract: {p.get('abstract')}\n"
+            data_claims = p.get('claims', [])
+            if data_claims and isinstance(data_claims[0], dict):
+                 claims = "\n".join([f"{c['number']}: {c['text']}" for c in data_claims])
+            else:
+                 claims = "\n".join(data_claims)
+            portfolio_text += f"Claims (excerpt): {claims[:5000]}\n"
+
+        system_prompt = "Act as an expert IP Portfolio Manager and Strategist."
+        
+        user_prompt = f"""
+        Analyze the following patent portfolio based on the user context.
+        
+        **User Context:**
+        {user_context}
+        
+        **Portfolio Data:**
+        {portfolio_text}
+        
+        **Instruction:**
+        Provide a strategic portfolio assessment.
+        
+        ### 1. Portfolio Overview
+        * **Summary of Holdings:** [Briefly describe the collection]
+        * **Technological Clusters:** [Group them by tech/approach]
+        
+        ### 2. Comparative Analysis
+        * **Strengths:** [Which patents are strongest and why?]
+        * **Weaknesses/Gaps:** [What is missing?]
+        * **Overlap:** [Are they redundant or complementary?]
+        
+        ### 3. Strategic Recommendations
+        * **Commercialization Strategy:** [How to bundle or sell?]
+        * **Action Items:** [Keep, Drop, or Strengthen?]
+        """
+         
+        response = client.chat.completions.create(
+            model="gpt-5-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
+        )
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        return f"Error analyzing portfolio: {str(e)}"
+
+def generate_pitch_deck(patent_data, user_context, api_key):
+    """
+    Generates a pitch deck outline for an innovator.
+    """
+    try:
+        client = get_client(api_key)
+        
+        # Build context from patent data (handle list or single)
+        if isinstance(patent_data, list):
+             # Portfolio mode
+             p_context = f"Portoflio of {len(patent_data)} patents."
+             p_title = "IP Portfolio"
+        else:
+             p_context = f"Title: {patent_data.get('title')}\nAbstract: {patent_data.get('abstract')}"
+             p_title = patent_data.get('title')
+
+        prompt = f"""
+        Create a 7-slide Investor Pitch Deck for the following IP.
+        
+        **IP Context:** {p_title}
+        {p_context[:2000]}
+        
+        **User/Company Context:** {user_context}
+        
+        **Slides Required:**
+        1. Title Slide (Catchy Tagline)
+        2. The Problem (Pain Point)
+        3. The Solution (The Tech/IP)
+        4. Market Opportunity (TAM/SAM/SOM)
+        5. Competitive Advantage (Moat)
+        6. Business Model
+        7. The Ask / Next Steps
+        
+        Output as a structured list with 'Slide X: [Title]' and bullet points for content.
+        """
+        
+        response = client.chat.completions.create(
+            model="gpt-5-mini",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Error generating pitch deck: {str(e)}"
+
+def generate_glossary(patent_text, api_key):
+    """
+    Extracts difficult terms and provides ELI5 definitions.
+    """
+    try:
+        client = get_client(api_key)
+        prompt = f"""
+        Extract 10-15 complex technical terms or legal jargon from the text below and provide simple, 'Explain Like I'm 5' definitions for a business user.
+        Format as a Markdown table with columns: Term, Definition.
+        
+        Text:
+        {patent_text[:10000]}
+        """
+        
+        response = client.chat.completions.create(
+            model="gpt-5-mini",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Error generating glossary: {str(e)}"
+
 def format_chat_history(streamlit_messages):
     """
     Converts Streamlit chat history [{'role': 'user', 'content': '...'}, ...]
