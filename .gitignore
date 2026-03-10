@@ -1,3 +1,5 @@
 .env
-/planning/scoping.md
 .streamlit
+.claude/
+__pycache__/
+*.pyc

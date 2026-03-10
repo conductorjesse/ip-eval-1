@@ -46,12 +46,16 @@ def load_questions(csv_path):
 
 def render_score_page():
     st.header("IP Score Matrix")
-    st.markdown("Evaluate your IP based on the 5-point assessment matrix.")
+    st.markdown("Manually set and adjust scores for each dimension to build a structured view of your IP's strengths and gaps.")
+    st.info(
+        "**Note:** The IPScore framework is one approach to evaluating IP and is generally better suited for "
+        "later-stage companies with more established portfolios. For early-stage technologies, the AI-driven "
+        "evaluation on the main Analysis page may be more relevant."
+    )
     st.caption("Based on the [EPO IPScore methodology](https://www.epo.org/en/searching-for-patents/business/ipscore).")
 
-    # Path to CSV - assuming it is in planning folder or moved to logic
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    csv_path = os.path.join(base_dir, "planning", "IPscore-full-table.csv")
+    csv_path = os.path.join(base_dir, "data", "IPscore-full-table.csv")
     
     questions = load_questions(csv_path)
     

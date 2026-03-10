@@ -19,6 +19,15 @@ class PDFReport(FPDF):
         self.cell(0, 10, 'Page ' + str(self.page_no()) + '/{nb}', 0, 0, 'C')
 
     def sanitize(self, text):
+        # Transliterate common Unicode characters to latin-1 equivalents
+        replacements = {
+            '\u2013': '-', '\u2014': '--', '\u2018': "'", '\u2019': "'",
+            '\u201c': '"', '\u201d': '"', '\u2026': '...', '\u00b2': '2',
+            '\u00b3': '3', '\u2076': '6', '\u2082': '2', '\u2083': '3',
+            '\u00b0': 'deg', '\u2192': '->', '\u2264': '<=', '\u2265': '>=',
+        }
+        for char, replacement in replacements.items():
+            text = text.replace(char, replacement)
         return text.encode('latin-1', 'replace').decode('latin-1')
 
     def chapter_title(self, label):
@@ -84,4 +93,4 @@ def create_pdf(patent_data, evaluation_text, user_context, filename="ip_report.p
     if current_body:
         pdf.chapter_body(current_body.strip())
 
-    return pdf.output(dest='S').encode('latin-1') # Return as bytes for Streamlit download
+    return bytes(pdf.output(dest='S'))

@@ -27,10 +27,10 @@ def render_setup_page():
     with st.expander("Customize your persona", expanded=True):
         col_ctx1, col_ctx2 = st.columns(2)
         with col_ctx1:
-            role = st.text_area("Role / Background", value="PhD in Chemical Engineering, focused on catalysis, 10 years in industry", height=100)
-            goal = st.text_area("Primary Goal", value="License 1-2 early-stage catalyst technologies that can convert renewable feedstocks (CO2, biomass, green H2) into commodity chemicals or drop-in fuels.", height=100)
+            role = st.text_area("Role / Background", placeholder="e.g. PhD in Chemical Engineering, 10 years in industry", height=100)
+            goal = st.text_area("Primary Goal", placeholder="e.g. License early-stage technologies for commercial development", height=100)
         with col_ctx2:
-            criteria = st.text_area("Specific Criteria", value="Technology readiness: TRL 3-5 (proof of concept demonstrated, ideally some bench-scale data). IP strength: Clear patent coverage with freedom to operate", height=100)
+            criteria = st.text_area("Specific Criteria", placeholder="e.g. Technology readiness: TRL 3-5, clear patent coverage with freedom to operate", height=100)
             
     # Combine into a single context string for the AI
     user_context = f"""
